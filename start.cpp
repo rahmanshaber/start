@@ -40,7 +40,7 @@ Start::Start(QWidget *parent) :QWidget(parent),ui(new Ui::Start)
     loadSpeedDial();
 
     // Configure Recent Activity
-    if (!sm.getDisableRecent()) {
+    if (!sm.getShowRecent()) {
         QString raFile = QDir::homePath() + "/.config/coreBox/RecentActivity";
         QFile file(raFile);
         if (!file.exists()) {
@@ -84,7 +84,7 @@ void Start::on_speedDialB_itemDoubleClicked(QListWidgetItem *item) // open Speed
 {
     BookmarkManage bk;
     // Function from utilities.cpp
-    GlobalFunc::appSelectionEngine(bk.bookmarkPath("Speed Dial", item->text()));
+    GlobalFunc::appSelectionEngine(bk.bookmarkPath("Speed Dial", item->text()),this);
 }
 
 void Start::loadSpeedDial() // populate SpeedDial list
@@ -168,7 +168,7 @@ void Start::loadRecent() // populate RecentActivity list
             QTreeWidgetItem *child = new QTreeWidgetItem();
             QString value = recentActivity.value(key).toString();
             child->setText(0, value);
-            child->setIcon(0, Utilities::getAppIcon(value.split("\t\t\t").at(0).toLower()));
+            child->setIcon(0, Utilities::getAppIcon(value.split("\t\t\t").at(0)));
             topTree->addChild(child);
         }
         recentActivity.endGroup();
@@ -334,7 +334,7 @@ void Start::on_rDeleteSession_clicked()
 void Start::loadsettings() // load settings
 {
     // Check is recent disabled or not
-    if (sm.getDisableRecent()) {
+    if (sm.getShowRecent()) {
         ui->recentActivites->setVisible(0);
         ui->recentActivitesL->clear();
         ui->pages->setCurrentIndex(0);
@@ -344,18 +344,19 @@ void Start::loadsettings() // load settings
     }
 }
 
-void Start::pageClick(QPushButton *btn, int i)
+void Start::pageClick(QPushButton *btn, int i, QString windowTitle)
 {
     // all button checked false
     for (QPushButton *b : ui->pageButtons->findChildren<QPushButton*>())
         b->setChecked(false);
     btn->setChecked(true);
     ui->pages->slideInIdx(i);
+    this->setWindowTitle(windowTitle + " - Start");
 
     if(btn == ui->recentActivites){
         ui->rClearActivity->setVisible(1);
         ui->rDeleteSession->setVisible(0);
-    } else if(btn == ui->savedSession){
+    } else if(btn == ui->session){
         ui->rClearActivity->setVisible(0);
         ui->rDeleteSession->setVisible(1);
     } else{
@@ -366,22 +367,22 @@ void Start::pageClick(QPushButton *btn, int i)
 
 void Start::on_coreApps_clicked()
 {
-    pageClick(ui->coreApps, 0);
+    pageClick(ui->coreApps, 0, "CoreApps");
 }
 
 void Start::on_speedDial_clicked()
 {
-    pageClick(ui->speedDial, 1);
+    pageClick(ui->speedDial, 1, "Speed Dial");
 }
 
 void Start::on_recentActivites_clicked()
 {
-    pageClick(ui->recentActivites, 2);
+    pageClick(ui->recentActivites, 2, "Recent Activites");
 }
 
-void Start::on_savedSession_clicked()
+void Start::on_session_clicked()
 {
-    pageClick(ui->savedSession, 3);
+    pageClick(ui->session, 3, "Sessions");
 }
 
 void Start::reload()
@@ -389,7 +390,7 @@ void Start::reload()
     loadSpeedDial();
     loadSession();
     loadsettings();
-    if (!sm.getDisableRecent())
+    if (!sm.getShowRecent())
         loadRecent();
     else on_coreApps_clicked();
 }
@@ -398,7 +399,7 @@ void Start::reload(const QString &path)
 {
     QFileInfo fi(path);
     if (fi.fileName() == "RecentActivity") {
-        if (!sm.getDisableRecent())
+        if (!sm.getShowRecent())
             loadRecent();
         // Hopefully this is not needed
         else on_coreApps_clicked();
@@ -409,5 +410,4 @@ void Start::reload(const QString &path)
         loadSession();
     }
 }
-
 
